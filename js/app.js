@@ -229,3 +229,4 @@ try {
         document.getElementById('userAvatar').textContent = (payload.given_name || 'U')[0].toUpperCase();
     }
 } catch(e) {}
+

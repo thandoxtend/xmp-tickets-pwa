@@ -37,6 +37,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .logo {
@@ -66,6 +68,7 @@
             display: flex;
             align-items: center;
             gap: 16px;
+            flex-wrap: wrap;
         }
 
         .company-select {
@@ -154,6 +157,7 @@
             gap: 12px;
             margin-bottom: 24px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .filter-chip {
@@ -325,50 +329,6 @@
             color: #64748B;
         }
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 300;
-            display: none;
-        }
-
-        .modal {
-            background: #1E293B;
-            border-radius: 24px;
-            width: 500px;
-            max-width: 90%;
-            padding: 24px;
-        }
-
-        .modal h3 {
-            margin-bottom: 20px;
-        }
-
-        .modal input, .modal select, .modal textarea {
-            width: 100%;
-            background: #0F172A;
-            border: 1px solid #334155;
-            padding: 12px;
-            border-radius: 8px;
-            color: white;
-            margin-bottom: 16px;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
         .hidden {
             display: none;
         }
@@ -376,6 +336,284 @@
         @media (max-width: 768px) {
             .detail-pane { width: 100%; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .nav-container { flex-direction: column; align-items: stretch; }
+            .nav-actions { justify-content: space-between; }
+        }
+
+        /* Modal Styles - Modern Design */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: #1E293B;
+            border-radius: 24px;
+            width: 550px;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .modal-header h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+            margin: 0;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #334155;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 24px;
+            border-top: 1px solid #334155;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #CBD5E1;
+            margin-bottom: 8px;
+        }
+
+        .required {
+            color: #EF4444;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            font-size: 14px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+        }
+
+        /* Type Selector Buttons */
+        .type-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .type-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            background: #0F172A;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+        }
+
+        .type-btn:hover {
+            border-color: #3B82F6;
+            background: #1E293B;
+            transform: translateY(-2px);
+        }
+
+        .type-btn.active {
+            border-color: #3B82F6;
+            background: linear-gradient(135deg, #1A56DB20, #3B82F620);
+        }
+
+        .type-icon {
+            font-size: 28px;
+        }
+
+        .type-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .type-desc {
+            font-size: 11px;
+            color: #94A3B8;
+        }
+
+        /* Priority Selector Buttons */
+        .priority-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .priority-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            color: #CBD5E1;
+        }
+
+        .priority-btn:hover {
+            border-color: #3B82F6;
+            transform: translateY(-1px);
+        }
+
+        .priority-btn.active {
+            border-width: 2px;
+        }
+
+        .priority-btn.low.active {
+            border-color: #10B981;
+            background: #10B98120;
+            color: #34D399;
+        }
+
+        .priority-btn.medium.active {
+            border-color: #3B82F6;
+            background: #3B82F620;
+            color: #60A5FA;
+        }
+
+        .priority-btn.high.active {
+            border-color: #F97316;
+            background: #F9731620;
+            color: #FB923C;
+        }
+
+        .priority-btn.urgent.active {
+            border-color: #EF4444;
+            background: #EF444420;
+            color: #F87171;
+        }
+
+        /* Optional Fields */
+        .optional-fields {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-row {
+            display: flex;
+            gap: 16px;
+        }
+
+        .form-group.half {
+            flex: 1;
+        }
+
+        /* Modal Buttons */
+        .btn-cancel, .btn-submit {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            border: none;
+        }
+
+        .btn-cancel {
+            background: #334155;
+            color: #CBD5E1;
+        }
+
+        .btn-cancel:hover {
+            background: #475569;
+            color: white;
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #1A56DB, #3B82F6);
+            color: white;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.4);
         }
     </style>
 </head>
@@ -388,7 +626,7 @@
             </div>
             <div class="nav-actions">
                 <select id="companySelect" class="company-select">
-                    <option value="">Select Company</option>
+                    <option value="">Loading companies...</option>
                 </select>
                 <button class="btn-new" onclick="openNewTicket()">+ New Ticket</button>
                 <div class="user-menu" onclick="logout()">
@@ -400,7 +638,7 @@
     </nav>
 
     <div class="main-container">
-        <div class="stats-grid" id="statsGrid">
+        <div class="stats-grid">
             <div class="stat-card"><div class="stat-value" id="statAssigned">0</div><div class="stat-label">Assigned to Me</div></div>
             <div class="stat-card"><div class="stat-value" id="statOpen">0</div><div class="stat-label">Open</div></div>
             <div class="stat-card"><div class="stat-value" id="statUrgent">0</div><div class="stat-label">Urgent</div></div>
@@ -408,12 +646,12 @@
         </div>
 
         <div class="filters">
-            <div class="filter-chip active" data-filter="all">All</div>
-            <div class="filter-chip" data-filter="open">Open</div>
-            <div class="filter-chip" data-filter="in_progress">In Progress</div>
-            <div class="filter-chip" data-filter="pending">Pending</div>
-            <div class="filter-chip" data-filter="resolved">Resolved</div>
-            <div class="search-bar"><input type="text" id="searchInput" placeholder="Search tickets..."></div>
+            <div class="filter-chip active" data-filter="all" onclick="filterTickets('all')">All</div>
+            <div class="filter-chip" data-filter="open" onclick="filterTickets('open')">Open</div>
+            <div class="filter-chip" data-filter="in_progress" onclick="filterTickets('in_progress')">In Progress</div>
+            <div class="filter-chip" data-filter="pending" onclick="filterTickets('pending')">Pending</div>
+            <div class="filter-chip" data-filter="resolved" onclick="filterTickets('resolved')">Resolved</div>
+            <div class="search-bar"><input type="text" id="searchInput" placeholder="Search tickets..." oninput="searchTickets()"></div>
         </div>
 
         <div class="tickets-table-container">
@@ -428,18 +666,114 @@
     </div>
 
     <div class="detail-pane" id="detailPane">
-        <div class="detail-header"><div><strong id="detailId">---</strong><br><span id="detailTitle">Ticket Title</span></div><button class="detail-close" onclick="closeDetail()">×</button></div>
+        <div class="detail-header">
+            <div><strong id="detailId">---</strong><br><span id="detailTitle">Ticket Title</span></div>
+            <button class="detail-close" onclick="closeDetail()">×</button>
+        </div>
         <div class="detail-body" id="detailBody"></div>
     </div>
 
+    <!-- New Ticket Modal -->
     <div class="modal-overlay" id="modalOverlay">
-        <div class="modal"><h3>Create New Ticket</h3>
-            <select id="ticketType"><option value="operations">Operations</option><option value="admin">Admin / HR</option></select>
-            <select id="ticketCompany"></select>
-            <input type="text" id="ticketTitle" placeholder="Title">
-            <textarea id="ticketDesc" rows="4" placeholder="Description"></textarea>
-            <select id="ticketPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select>
-            <div class="modal-buttons"><button onclick="closeModal()" style="background:#334155">Cancel</button><button onclick="submitTicket()" style="background:#1A56DB">Submit</button></div>
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Create New Ticket</h3>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Ticket Type</label>
+                    <div class="type-selector">
+                        <button type="button" class="type-btn active" data-type="operations" onclick="selectTicketType('operations')">
+                            <span class="type-icon">🚛</span>
+                            <span class="type-name">Operations</span>
+                            <span class="type-desc">Vehicle, Fleet, Maintenance</span>
+                        </button>
+                        <button type="button" class="type-btn" data-type="admin" onclick="selectTicketType('admin')">
+                            <span class="type-icon">📋</span>
+                            <span class="type-name">Admin / HR</span>
+                            <span class="type-desc">HR, IT, Leave, Reimbursement</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Company <span class="required">*</span></label>
+                    <select id="ticketCompany" class="form-select">
+                        <option value="">Select a company</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Title <span class="required">*</span></label>
+                    <input type="text" id="ticketTitle" class="form-input" placeholder="Brief summary of the issue">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description <span class="required">*</span></label>
+                    <textarea id="ticketDesc" class="form-textarea" rows="4" placeholder="Detailed description of the issue..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <div class="priority-selector">
+                        <button type="button" class="priority-btn low" onclick="selectPriority('low')"><span>🟢</span> Low</button>
+                        <button type="button" class="priority-btn medium active" onclick="selectPriority('medium')"><span>🔵</span> Medium</button>
+                        <button type="button" class="priority-btn high" onclick="selectPriority('high')"><span>🟠</span> High</button>
+                        <button type="button" class="priority-btn urgent" onclick="selectPriority('urgent')"><span>🔴</span> Urgent</button>
+                    </div>
+                    <input type="hidden" id="ticketPriority" value="medium">
+                </div>
+
+                <div id="opsFields" class="optional-fields">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label class="form-label">Vehicle Number</label>
+                            <input type="text" id="ticketVehicle" class="form-input" placeholder="e.g., WC 445-321">
+                        </div>
+                        <div class="form-group half">
+                            <label class="form-label">Department</label>
+                            <select id="ticketDepartment" class="form-select">
+                                <option value="">Select department</option>
+                                <option>Fleet</option>
+                                <option>Logistics</option>
+                                <option>Operations</option>
+                                <option>Maintenance</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="adminFields" class="optional-fields" style="display: none;">
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label class="form-label">Category</label>
+                            <select id="ticketCategory" class="form-select">
+                                <option value="">Select category</option>
+                                <option>HR</option>
+                                <option>IT Support</option>
+                                <option>Leave</option>
+                                <option>Reimbursement</option>
+                                <option>Finance</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label class="form-label">Department</label>
+                            <select id="ticketAdminDept" class="form-select">
+                                <option value="">Select department</option>
+                                <option>HR</option>
+                                <option>IT</option>
+                                <option>Finance</option>
+                                <option>Administration</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn-submit" onclick="submitTicket()">Create Ticket</button>
+            </div>
         </div>
     </div>
 
