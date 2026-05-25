@@ -480,6 +480,7 @@ function closeModal() {
 }
 
 function logout() { 
+    console.log('Logging out, clearing all data');
     localStorage.clear(); 
     window.location.href = '/login.html'; 
 }
@@ -494,22 +495,39 @@ document.getElementById('companySelect')?.addEventListener('change', function(e)
 async function init() {
     console.log('Initializing XMP Tickets...');
     
-    try {
-        const token = localStorage.getItem('xmp_access_token');
-        if (token) {
-            const payload = JSON.parse(atob(token.split('.')[1]));
-            const userName = payload.given_name || payload.email?.split('@')[0] || 'User';
-            const userAvatarEl = document.getElementById('userAvatar');
-            const userNameEl = document.getElementById('userName');
-            if (userNameEl) userNameEl.textContent = userName;
-            if (userAvatarEl) userAvatarEl.textContent = userName.charAt(0).toUpperCase();
-            
-            if (payload.email) {
-                localStorage.setItem('xmp_user_email', payload.email);
+    // Get user info from localStorage
+    const userName = localStorage.getItem('xmp_user_name') || 'User';
+    const userEmail = localStorage.getItem('xmp_user_email') || '';
+    const userFullName = localStorage.getItem('xmp_user_full_name') || userName;
+    
+    console.log('Current user:', { userName, userEmail, userFullName });
+    
+    // Update UI with user name
+    const userNameEl = document.getElementById('userName');
+    const userAvatarEl = document.getElementById('userAvatar');
+    
+    if (userNameEl) {
+        userNameEl.textContent = userFullName || userName;
+    }
+    
+    if (userAvatarEl) {
+        userAvatarEl.textContent = (userFullName || userName).charAt(0).toUpperCase();
+    }
+    
+    // Also try to get from token if not in localStorage
+    if (!userName || userName === 'User') {
+        try {
+            const token = localStorage.getItem('xmp_access_token');
+            if (token) {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                const tokenName = payload.given_name || payload.name || payload.email?.split('@')[0] || 'User';
+                if (userNameEl) userNameEl.textContent = tokenName;
+                if (userAvatarEl) userAvatarEl.textContent = tokenName.charAt(0).toUpperCase();
+                localStorage.setItem('xmp_user_name', tokenName);
             }
+        } catch(e) {
+            console.log('Could not decode token', e);
         }
-    } catch(e) {
-        console.log('Could not decode token', e);
     }
     
     await loadCompanies();

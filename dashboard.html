@@ -630,9 +630,12 @@
                 </select>
                 <button class="btn-new" onclick="openNewTicket()">+ New Ticket</button>
                 <div class="user-menu" onclick="logout()">
-                    <div class="user-avatar" id="userAvatar">U</div>
-                    <span id="userName">User</span>
-                </div>
+            <div class="user-avatar" id="userAvatar">U</div>
+    <div>
+        <span id="userName">User</span>
+        <div style="font-size: 10px; color: #94A3B8;" id="userEmail"></div>
+    </div>
+</div>
             </div>
         </div>
     </nav>
@@ -784,4 +787,29 @@
         if (!token) window.location.href = '/login.html';
     </script>
 </body>
+<script>
+    // Route Protection - Check if user is authenticated
+    (function checkAuth() {
+        const token = localStorage.getItem('xmp_access_token');
+        const expiry = localStorage.getItem('xmp_token_expiry');
+        
+        console.log('Auth check - Token exists:', !!token);
+        console.log('Auth check - Expiry:', expiry);
+        
+        if (!token) {
+            console.log('No token found, redirecting to login');
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        if (expiry && Date.now() > parseInt(expiry)) {
+            console.log('Token expired, redirecting to login');
+            localStorage.clear();
+            window.location.href = '/login.html';
+            return;
+        }
+        
+        console.log('User authenticated');
+    })();
+</script>
 </html>
