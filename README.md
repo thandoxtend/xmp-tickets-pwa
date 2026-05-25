@@ -80,3 +80,61 @@ npm start
 
 # 4. Open browser to:
 #    http://localhost:3000/login.html
+
+
+
+📱 Install as PWA
+Desktop (Chrome/Edge)
+Visit the deployed URL
+
+Click install icon in address bar
+
+App installs as standalone window
+
+Mobile (iOS)
+Open in Safari
+
+Tap Share → "Add to Home Screen"
+
+Mobile (Android)
+Open in Chrome
+
+Tap ⋮ → "Install app"
+
+🔌 API Security
+Endpoint	Authentication	Method
+/api/auth/login	None (credentials)	POST
+/api/auth/mfa	Session token	POST
+/api/companies	Bearer token	GET
+/api/tickets	Bearer token	GET/POST
+/api/tickets/:id/messages	Bearer token	POST
+🐛 Troubleshooting
+Issue: "Token expired"
+Solution: Log out and log in again
+
+Issue: "401 Unauthorized"
+Solution: Token invalid - clear localStorage and re-authenticate
+
+Issue: "CORS errors"
+Solution: Use the deployed version on Render (handles CORS automatically)
+
+Security Check: Verify no password stored
+Open browser console (F12) and run:
+
+javascript
+// This should NOT show your password
+console.log(localStorage.getItem('password'));  // Should be null
+
+// This shows your token (normal)
+console.log(localStorage.getItem('xmp_access_token'));  // Token exists
+📁 Project Structure
+text
+xmp-tickets-pwa/
+├── server.js          # Node.js proxy server
+├── dashboard.html     # Main application
+├── login.html         # Login page
+├── js/
+│   └── app.js        # Frontend logic
+├── package.json      # Dependencies
+├── render.yaml       # Deployment config
+└── README.md         # Documentation
