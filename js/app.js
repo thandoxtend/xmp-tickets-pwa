@@ -6,34 +6,59 @@ let currentTicketId = null;
 let tickets = [];
 
 // Load companies
+// Update the loadCompanies function to show ticket counts
 async function loadCompanies() {
+    console.log('🔄 Loading companies...');
+    const token = localStorage.getItem('xmp_access_token');
+    
+    if (!token) {
+        console.error('❌ No token found');
+        return;
+    }
+    
     try {
-        const res = await fetch(`${API_BASE}/api/companies`, {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('xmp_access_token')}` }
+        const res = await fetch('/api/companies', {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
+        
         const companies = await res.json();
+        console.log(`✅ Loaded ${companies.length} companies`);
         
         const select = document.getElementById('companySelect');
         const ticketSelect = document.getElementById('ticketCompany');
         
-        companies.forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c.id;
-            opt.textContent = c.name;
-            select.appendChild(opt);
-            ticketSelect.appendChild(opt.cloneNode(true));
-        });
+        select.innerHTML = '<option value="">-- Select Company --</option>';
         
-        if (companies[0]) {
+        // Fetch ticket counts for each company
+        for (const company of companies) {
+            const ticketRes = await fetch(`/api/tickets?company_id=${company.id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const ticketData = await ticketRes.json();
+            const ticketCount = ticketData.tickets?.length || 0;
+            
+            const opt = document.createElement('option');
+            opt.value = company.id;
+            opt.textContent = `${company.name} (${ticketCount} tickets)`;
+            select.appendChild(opt);
+            
+            if (ticketSelect) {
+                const opt2 = document.createElement('option');
+                opt2.value = company.id;
+                opt2.textContent = company.name;
+                ticketSelect.appendChild(opt2);
+            }
+        }
+        
+        if (companies.length > 0) {
             currentCompanyId = companies[0].id;
             select.value = currentCompanyId;
-            loadTickets();
+            await loadTickets();
         }
     } catch (err) {
-        console.error('Failed to load companies:', err);
+        console.error('❌ Failed to load companies:', err);
     }
 }
-
 // Load tickets
 async function loadTickets() {
     if (!currentCompanyId) return;
