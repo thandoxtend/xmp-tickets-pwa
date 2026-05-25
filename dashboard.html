@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1A56DB">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Dashboard | XMP Tickets</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #F1F5F9;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #1A56DB, #3B82F6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .company-select {
+            background: #1E293B;
+            border: 1px solid #334155;
+            padding: 8px 12px;
+            border-radius: 8px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .btn-new {
+            background: linear-gradient(135deg, #1A56DB, #3B82F6);
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-new:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: #1E293B;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #1A56DB, #3B82F6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Main Content */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #1E293B;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #334155;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #94A3B8;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            background: #1E293B;
+            border: 1px solid #334155;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip:hover {
+            background: #334155;
+        }
+
+        .filter-chip.active {
+            background: #1A56DB;
+            border-color: #1A56DB;
+        }
+
+        .search-bar {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            background: #1E293B;
+            border: 1px solid #334155;
+            padding: 8px 16px;
+            border-radius: 20px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .search-bar input::placeholder {
+            color: #64748B;
+        }
+
+        /* Tickets Table */
+        .tickets-table-container {
+            background: #1E293B;
+            border-radius: 16px;
+            border: 1px solid #334155;
+            overflow-x: auto;
+        }
+
+        .tickets-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tickets-table th {
+            text-align: left;
+            padding: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94A3B8;
+            border-bottom: 1px solid #334155;
+        }
+
+        .tickets-table td {
+            padding: 16px;
+            border-bottom: 1px solid #334155;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tickets-table tr:hover td {
+            background: #2D3A5E;
+        }
+
+        .tickets-table tr.selected td {
+            background: #1A56DB20;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-open { background: #1A56DB20; color: #60A5FA; }
+        .badge-inprogress { background: #8B5CF620; color: #A78BFA; }
+        .badge-pending { background: #F59E0B20; color: #FBBF24; }
+        .badge-resolved { background: #10B98120; color: #34D399; }
+        .badge-urgent { background: #EF444420; color: #F87171; }
+        .badge-high { background: #F9731620; color: #FB923C; }
+        .badge-medium { background: #3B82F620; color: #60A5FA; }
+        .badge-low { background: #6B728020; color: #9CA3AF; }
+
+        /* Detail Pane */
+        .detail-pane {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 450px;
+            height: 100vh;
+            background: #1E293B;
+            border-left: 1px solid #334155;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 200;
+            overflow-y: auto;
+        }
+
+        .detail-pane.open {
+            transform: translateX(0);
+        }
+
+        .detail-header {
+            padding: 20px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .detail-close {
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .detail-body {
+            padding: 20px;
+        }
+
+        .detail-section {
+            margin-bottom: 24px;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748B;
+            margin-bottom: 8px;
+        }
+
+        .reply-input {
+            width: 100%;
+            background: #0F172A;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+        }
+
+        .btn-send {
+            background: #1A56DB;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            color: white;
+            margin-top: 12px;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748B;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            display: none;
+        }
+
+        .modal {
+            background: #1E293B;
+            border-radius: 24px;
+            width: 500px;
+            max-width: 90%;
+            padding: 24px;
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+        }
+
+        .modal input, .modal select, .modal textarea {
+            width: 100%;
+            background: #0F172A;
+            border: 1px solid #334155;
+            padding: 12px;
+            border-radius: 8px;
+            color: white;
+            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .detail-pane { width: 100%; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">X</div>
+                <span class="logo-text">XMP Tickets</span>
+            </div>
+            <div class="nav-actions">
+                <select id="companySelect" class="company-select">
+                    <option value="">Select Company</option>
+                </select>
+                <button class="btn-new" onclick="openNewTicket()">+ New Ticket</button>
+                <div class="user-menu" onclick="logout()">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <span id="userName">User</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="stat-value" id="statAssigned">0</div><div class="stat-label">Assigned to Me</div></div>
+            <div class="stat-card"><div class="stat-value" id="statOpen">0</div><div class="stat-label">Open</div></div>
+            <div class="stat-card"><div class="stat-value" id="statUrgent">0</div><div class="stat-label">Urgent</div></div>
+            <div class="stat-card"><div class="stat-value" id="statCross">0</div><div class="stat-label">Cross-Company</div></div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-chip active" data-filter="all">All</div>
+            <div class="filter-chip" data-filter="open">Open</div>
+            <div class="filter-chip" data-filter="in_progress">In Progress</div>
+            <div class="filter-chip" data-filter="pending">Pending</div>
+            <div class="filter-chip" data-filter="resolved">Resolved</div>
+            <div class="search-bar"><input type="text" id="searchInput" placeholder="Search tickets..."></div>
+        </div>
+
+        <div class="tickets-table-container">
+            <table class="tickets-table">
+                <thead>
+                    <tr><th>ID</th><th>Title</th><th>Type</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th></tr>
+                </thead>
+                <tbody id="ticketsTableBody"></tbody>
+            </table>
+            <div id="emptyState" class="empty-state hidden">No tickets found</div>
+        </div>
+    </div>
+
+    <div class="detail-pane" id="detailPane">
+        <div class="detail-header"><div><strong id="detailId">---</strong><br><span id="detailTitle">Ticket Title</span></div><button class="detail-close" onclick="closeDetail()">×</button></div>
+        <div class="detail-body" id="detailBody"></div>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal"><h3>Create New Ticket</h3>
+            <select id="ticketType"><option value="operations">Operations</option><option value="admin">Admin / HR</option></select>
+            <select id="ticketCompany"></select>
+            <input type="text" id="ticketTitle" placeholder="Title">
+            <textarea id="ticketDesc" rows="4" placeholder="Description"></textarea>
+            <select id="ticketPriority"><option>Low</option><option selected>Medium</option><option>High</option><option>Urgent</option></select>
+            <div class="modal-buttons"><button onclick="closeModal()" style="background:#334155">Cancel</button><button onclick="submitTicket()" style="background:#1A56DB">Submit</button></div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        // Auth check
+        const token = localStorage.getItem('xmp_access_token');
+        if (!token) window.location.href = '/login.html';
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: xmp-tickets-pwa
+    runtime: node
+    repo: https://github.com/thandoxtend/xmp-tickets-pwa
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 18.17.0
+    healthCheckPath: /health
+    autoDeploy: true
