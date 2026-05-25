@@ -401,13 +401,36 @@
         }
 
         function saveTokenAndRedirect(token, username) {
-            localStorage.setItem('xmp_access_token', token);
-            localStorage.setItem('xmp_token_expiry', Date.now() + 3600000);
-            if (document.getElementById('rememberMe').checked) {
-                localStorage.setItem('xmp_remember_email', username);
-            }
-            window.location.href = '/dashboard.html';
-        }
+    localStorage.setItem('xmp_access_token', token);
+    localStorage.setItem('xmp_token_expiry', Date.now() + 3600000);
+    
+    // Decode token to get user info
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Token payload:', payload);
+        
+        const userEmail = payload.email || username;
+        const userName = payload.given_name || payload.name || payload['cognito:username'] || userEmail.split('@')[0];
+        const userFamilyName = payload.family_name || '';
+        
+        localStorage.setItem('xmp_user_email', userEmail);
+        localStorage.setItem('xmp_user_name', userName);
+        localStorage.setItem('xmp_user_full_name', (userName + ' ' + userFamilyName).trim());
+        
+        console.log('User saved:', { userName, userEmail });
+        
+    } catch(e) {
+        console.error('Could not decode token:', e);
+        localStorage.setItem('xmp_user_name', username.split('@')[0]);
+        localStorage.setItem('xmp_user_email', username);
+    }
+    
+    if (document.getElementById('rememberMe')?.checked) {
+        localStorage.setItem('xmp_remember_email', username);
+    }
+    
+    window.location.href = '/dashboard.html';
+}
 
         // Check existing session
         const token = localStorage.getItem('xmp_access_token');
