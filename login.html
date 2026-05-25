@@ -401,13 +401,34 @@
         }
 
         function saveTokenAndRedirect(token, username) {
-            localStorage.setItem('xmp_access_token', token);
-            localStorage.setItem('xmp_token_expiry', Date.now() + 3600000);
-            if (document.getElementById('rememberMe').checked) {
-                localStorage.setItem('xmp_remember_email', username);
-            }
-            window.location.href = '/dashboard.html';
-        }
+    localStorage.setItem('xmp_access_token', token);
+    localStorage.setItem('xmp_token_expiry', Date.now() + 3600000);
+    
+    // Decode token to get user info and company
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const userEmail = payload.email || username;
+        const userName = payload.given_name || userEmail.split('@')[0];
+        
+        localStorage.setItem('xmp_user_email', userEmail);
+        localStorage.setItem('xmp_user_name', userName);
+        
+        // Store user's default company from the token or use a default
+        const userCompanyId = payload.company_id || '00000000-0000-0000-0000-000000000001';
+        localStorage.setItem('xmp_user_company_id', userCompanyId);
+        
+        console.log('User logged in:', userName, userEmail);
+        console.log('User company:', userCompanyId);
+        
+    } catch(e) {
+        console.log('Could not decode token');
+    }
+    
+    if (document.getElementById('rememberMe')?.checked) {
+        localStorage.setItem('xmp_remember_email', username);
+    }
+    window.location.href = '/dashboard.html';
+}
 
         // Check existing session
         const token = localStorage.getItem('xmp_access_token');
