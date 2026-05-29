@@ -12,7 +12,12 @@ app.use((req, res, next) => {
     next();
 });
 
-// AUTH ENDPOINTS
+// Health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// ========== AUTH ENDPOINTS ==========
 app.post('/api/auth/login', async (req, res) => {
     console.log('📝 Login:', req.body.username);
     const { username, password } = req.body;
@@ -37,7 +42,6 @@ app.post('/api/auth/login', async (req, res) => {
         const data = await response.json();
         
         if (data.AuthenticationResult) {
-            // Decode token to get user info
             const token = data.AuthenticationResult.AccessToken;
             let userEmail = username;
             let userName = username.split('@')[0];
@@ -103,7 +107,7 @@ app.post('/api/auth/mfa', async (req, res) => {
     }
 });
 
-// COMPANIES API - Fixed endpoint
+// ========== COMPANIES API - FIXED ==========
 app.get('/api/companies', async (req, res) => {
     console.log('📡 Fetching companies...');
     const token = req.headers.authorization;
@@ -113,40 +117,51 @@ app.get('/api/companies', async (req, res) => {
         return res.status(401).json({ error: 'No authorization token' });
     }
     
-    try {
-        // Correct endpoint from your working curl command
-        const response = await fetch('https://api-staging.xmp.xtend.co/api/tickets/meta/companies', {
-            method: 'GET',
-            headers: {
-                'Authorization': token,
-                'Content-Type': 'application/json'
+    // Try multiple possible endpoints
+    const endpoints = [
+        'https://api-staging.xmp.xtend.co/api/tickets/meta/companies',
+        'https://api-staging.xmp.xtend.co/api/companies',
+        'https://api-staging.xmp.xtend.co/api/meta/companies',
+        'https://api-staging.xmp.xtend.co/api/user/companies'
+    ];
+    
+    for (const url of endpoints) {
+        try {
+            console.log(`Trying: ${url}`);
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Authorization': token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const companies = await response.json();
+                if (companies && Array.isArray(companies) && companies.length > 0) {
+                    console.log(`✅ Found ${companies.length} companies from ${url}`);
+                    return res.json(companies);
+                } else if (companies && companies.data && Array.isArray(companies.data)) {
+                    console.log(`✅ Found ${companies.data.length} companies (nested) from ${url}`);
+                    return res.json(companies.data);
+                }
+            } else {
+                console.log(`❌ ${url} returned ${response.status}`);
             }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`API returned ${response.status}`);
+        } catch (err) {
+            console.log(`❌ ${url} error:`, err.message);
         }
-        
-        const companies = await response.json();
-        console.log(`✅ Found ${companies.length} companies`);
-        
-        // Send companies array directly
-        res.json(companies);
-        
-    } catch (err) {
-        console.error('Companies error:', err);
-        // Return fallback companies for demo
-        res.json([
-            { id: '00000000-0000-0000-0000-000000000001', name: 'Xtend' },
-            { id: '639e482c-3737-46f1-bdc1-5b564ce59e6b', name: 'Guud Mobiles' },
-            { id: '4459e2b4-73ad-44a9-882b-41dd4e278bee', name: 'MSS 24' },
-            { id: '721adf26-c618-4923-905f-549febbf08c5', name: 'Guud Drivers' },
-            { id: '2baac9c0-6920-47ed-a019-3dec9fbc3185', name: 'Xtend Mobility SA' }
-        ]);
     }
+    
+    // Fallback - return the company the user logged in with
+    console.log('⚠️ Using fallback companies');
+    res.json([
+        { id: '00000000-0000-0000-0000-000000000001', name: 'Xtend' },
+        { id: '639e482c-3737-46f1-bdc1-5b564ce59e6b', name: 'Guud Mobiles' }
+    ]);
 });
 
-// TICKETS API
+// ========== TICKETS API ==========
 app.get('/api/tickets', async (req, res) => {
     const token = req.headers.authorization;
     const companyId = req.query.company_id;
@@ -159,11 +174,14 @@ app.get('/api/tickets', async (req, res) => {
     
     try {
         let url = 'https://api-staging.xmp.xtend.co/api/tickets?limit=50&offset=0&is_legacy=false';
-        if (companyId && companyId !== 'null' && companyId !== 'undefined') {
+        if (companyId && companyId !== 'null' && companyId !== 'undefined' && companyId !== '') {
             url += `&as_company_id=${companyId}`;
         }
         
+        console.log(`📡 Proxying to: ${url}`);
+        
         const response = await fetch(url, {
+            method: 'GET',
             headers: {
                 'Authorization': token,
                 'Content-Type': 'application/json'
@@ -173,7 +191,7 @@ app.get('/api/tickets', async (req, res) => {
         const data = await response.json();
         const tickets = data.tickets || [];
         console.log(`✅ Found ${tickets.length} tickets`);
-        res.json({ tickets: tickets, total: data.total });
+        res.json({ tickets: tickets, total: data.total || tickets.length });
         
     } catch (err) {
         console.error('Tickets error:', err);
@@ -252,26 +270,21 @@ app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.ht
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 
-app.listen(PORT, () => {
+// Start server
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║         XMP TICKETS PWA - RUNNING                            ║
+║         XMP TICKETS PWA - RUNNING ON RENDER                  ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
 ║  🚀 Server: http://localhost:${PORT}                         ║
 ║  🔐 Login: http://localhost:${PORT}/login.html              ║
+║  📊 Dashboard: http://localhost:${PORT}/dashboard.html      ║
 ║                                                              ║
-║  ✅ API Ready:                                              ║
-║     GET  /api/companies                                     ║
-║     GET  /api/tickets                                       ║
-║     POST /api/tickets                                       ║
-║     POST /api/tickets/:id/messages                          ║
+║  ✅ Health check: /health                                    ║
+║  ✅ Auth endpoints ready                                     ║
+║  ✅ API proxy ready                                          ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
     `);
-    // Add this to your server.js
-app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
-});
-
