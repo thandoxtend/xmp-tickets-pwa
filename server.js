@@ -3,29 +3,45 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Admin email that receives access requests
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@xtend.co';
+const XMP_API = 'https://api-staging.xmp.xtend.co';
+const XMP_ORIGIN = 'https://staging.xmp.xtend.co';
+
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// Log all requests
 app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
 
-// Health check endpoint for Render
+// ========== HEALTH CHECK ==========
 app.get('/health', (req, res) => {
     res.status(200).json({ status: 'healthy', timestamp: new Date().toISOString(), port: PORT });
 });
 
-// ========== AUTH ENDPOINTS ==========
+// ========== SHARED PROXY HEADERS ==========
+function xmpHeaders(authToken) {
+    return {
+        'Authorization': authToken,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Origin': XMP_ORIGIN,
+        'Referer': XMP_ORIGIN + '/',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    };
+}
+
+// ========== AUTH: LOGIN ==========
 app.post('/api/auth/login', async (req, res) => {
-    console.log('📝 Login attempt:', req.body.username);
     const { username, password } = req.body;
-    
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password required' });
     }
-    
+
+    console.log('📝 Login attempt:', username);
+
     try {
         const response = await fetch('https://cognito-idp.af-south-1.amazonaws.com/', {
             method: 'POST',
@@ -36,15 +52,12 @@ app.post('/api/auth/login', async (req, res) => {
             body: JSON.stringify({
                 AuthFlow: 'USER_PASSWORD_AUTH',
                 ClientId: '68n9jl2b4huqbk18ao7kf9umqk',
-                AuthParameters: {
-                    USERNAME: username,
-                    PASSWORD: password
-                }
+                AuthParameters: { USERNAME: username, PASSWORD: password }
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.AuthenticationResult) {
             const token = data.AuthenticationResult.AccessToken;
             let userEmail = username;
@@ -53,40 +66,35 @@ app.post('/api/auth/login', async (req, res) => {
                 const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
                 userEmail = payload.email || username;
                 userName = payload.given_name || userEmail.split('@')[0];
-            } catch(e) {}
-            
-            console.log('✅ Login successful for:', userName);
-            res.json({ 
-                success: true,
-                token: token,
-                email: userEmail,
-                name: userName
-            });
+            } catch (e) {}
+
+            console.log('✅ Login successful:', userName);
+            return res.json({ success: true, token, email: userEmail, name: userName });
+
         } else if (data.ChallengeName === 'SOFTWARE_TOKEN_MFA') {
-            console.log('🔐 MFA required for:', username);
-            res.json({ 
-                success: true,
-                challenge: 'MFA', 
-                session: data.Session 
-            });
+            console.log('🔐 MFA required:', username);
+            return res.json({ success: true, challenge: 'MFA', session: data.Session });
+
         } else {
-            console.log('❌ Login failed:', data.message);
-            res.status(401).json({ error: data.message || 'Authentication failed' });
+            const errMsg = data.message || data.__type || 'Authentication failed';
+            console.log('❌ Login failed:', errMsg);
+            return res.status(401).json({ error: errMsg });
         }
     } catch (err) {
         console.error('💥 Login error:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'Login service unavailable. Please try again.' });
     }
 });
 
+// ========== AUTH: MFA ==========
 app.post('/api/auth/mfa', async (req, res) => {
-    console.log('🔐 MFA verification for:', req.body.username);
     const { session, code, username } = req.body;
-    
     if (!session || !code || !username) {
         return res.status(400).json({ error: 'Session, code, and username required' });
     }
-    
+
+    console.log('🔐 MFA verification:', username);
+
     try {
         const response = await fetch('https://cognito-idp.af-south-1.amazonaws.com/', {
             method: 'POST',
@@ -98,236 +106,239 @@ app.post('/api/auth/mfa', async (req, res) => {
                 ChallengeName: 'SOFTWARE_TOKEN_MFA',
                 ClientId: '68n9jl2b4huqbk18ao7kf9umqk',
                 Session: session,
-                ChallengeResponses: {
-                    USERNAME: username,
-                    SOFTWARE_TOKEN_MFA_CODE: code
-                }
+                ChallengeResponses: { USERNAME: username, SOFTWARE_TOKEN_MFA_CODE: code }
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (data.AuthenticationResult) {
-            console.log('✅ MFA successful for:', username);
-            res.json({ token: data.AuthenticationResult.AccessToken });
+            console.log('✅ MFA successful:', username);
+            return res.json({ token: data.AuthenticationResult.AccessToken });
         } else {
             console.log('❌ MFA failed:', data.message);
-            res.status(401).json({ error: data.message || 'Invalid MFA code' });
+            return res.status(401).json({ error: data.message || 'Invalid MFA code' });
         }
     } catch (err) {
         console.error('💥 MFA error:', err.message);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ error: 'MFA verification unavailable. Please try again.' });
     }
 });
 
-// ========== COMPANIES API - WITH PROPER HEADERS ==========
-app.get('/api/companies', async (req, res) => {
-    console.log('📡 Fetching companies...');
-    const token = req.headers.authorization;
-    
-    if (!token) {
-        console.log('❌ No authorization token');
-        return res.status(401).json({ error: 'No authorization token' });
+// ========== AUTH: INVITE / REQUEST ACCESS ==========
+app.post('/api/auth/invite', async (req, res) => {
+    const { email, name, company } = req.body;
+
+    if (!email || !name || !company) {
+        return res.status(400).json({ error: 'Name, email, and company are required' });
     }
-    
-    // Headers that match the XMP web app (required for API access)
-    const headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Origin': 'https://staging.xmp.xtend.co',
-        'Referer': 'https://staging.xmp.xtend.co/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ error: 'Invalid email address' });
+    }
+
+    console.log(`📨 Access request from: ${name} <${email}> @ ${company}`);
+
+    // -------------------------------------------------------
+    // Option A: Send via SES / SMTP (uncomment when configured)
+    // -------------------------------------------------------
+    // const ses = new AWS.SES({ region: 'af-south-1' });
+    // await ses.sendEmail({
+    //   Source: 'noreply@xtend.co',
+    //   Destination: { ToAddresses: [ADMIN_EMAIL] },
+    //   Message: {
+    //     Subject: { Data: `XMP Access Request: ${name} (${company})` },
+    //     Body: {
+    //       Html: { Data: `
+    //         <h2>New XMP Platform Access Request</h2>
+    //         <p><strong>Name:</strong> ${name}</p>
+    //         <p><strong>Email:</strong> ${email}</p>
+    //         <p><strong>Company:</strong> ${company}</p>
+    //         <p>Log in to AWS Cognito to create their account, then send them an invitation.</p>
+    //       `}
+    //     }
+    //   }
+    // }).promise();
+    // -------------------------------------------------------
+
+    // Option B: Log the request + store it (always runs)
+    // In production, swap the above comment block in.
+    const requestRecord = {
+        timestamp: new Date().toISOString(),
+        name,
+        email,
+        company,
+        status: 'pending'
     };
-    
+
+    console.log('📋 Access request logged:', JSON.stringify(requestRecord));
+
+    // Respond success so the front-end can show confirmation
+    return res.json({
+        success: true,
+        message: `Access request received for ${name}. An admin will create your XMP account and send an invitation to ${email}.`
+    });
+});
+
+// ========== COMPANIES ==========
+app.get('/api/companies', async (req, res) => {
+    const token = req.headers.authorization;
+    if (!token) return res.status(401).json({ error: 'No authorization token' });
+
+    console.log('📡 Fetching companies...');
+
     const endpoints = [
-        'https://api-staging.xmp.xtend.co/api/tickets/meta/companies',
-        'https://api-staging.xmp.xtend.co/api/companies'
+        `${XMP_API}/api/tickets/meta/companies`,
+        `${XMP_API}/api/companies`
     ];
-    
+
     for (const url of endpoints) {
         try {
-            console.log(`Trying: ${url}`);
-            const response = await fetch(url, { method: 'GET', headers });
-            
+            console.log('Trying:', url);
+            const response = await fetch(url, { method: 'GET', headers: xmpHeaders(token) });
+
             if (response.ok) {
                 const data = await response.json();
                 const companies = Array.isArray(data) ? data : (data.data || data.companies || []);
                 if (companies.length > 0) {
-                    console.log(`✅ Found ${companies.length} companies`);
+                    console.log(`✅ Found ${companies.length} companies from ${url}`);
                     return res.json(companies);
                 }
             } else {
-                console.log(`❌ ${url} returned ${response.status}`);
+                const text = await response.text().catch(() => '');
+                console.log(`❌ ${url} → ${response.status}`, text.slice(0, 200));
             }
         } catch (err) {
             console.log(`❌ ${url} error:`, err.message);
         }
     }
-    
-    // Fallback companies for when API is down
-    console.log('⚠️ API returned errors, using fallback companies');
+
+    // Fallback so the UI doesn't break
+    console.log('⚠️ Using fallback company list');
     res.json([
         { id: '00000000-0000-0000-0000-000000000001', name: 'Xtend' }
     ]);
 });
 
-// ========== TICKETS API - WITH PROPER HEADERS ==========
+// ========== TICKETS ==========
 app.get('/api/tickets', async (req, res) => {
     const token = req.headers.authorization;
     const companyId = req.query.company_id;
-    
-    console.log(`📡 Fetching tickets for company: ${companyId}`);
-    
-    if (!token) {
-        return res.status(401).json({ error: 'No authorization token' });
-    }
-    
-    const headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Origin': 'https://staging.xmp.xtend.co',
-        'Referer': 'https://staging.xmp.xtend.co/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    };
-    
+    if (!token) return res.status(401).json({ error: 'No authorization token' });
+
+    console.log(`📡 Fetching tickets — company: ${companyId || 'all'}`);
+
     try {
-        let url = 'https://api-staging.xmp.xtend.co/api/tickets?limit=50&offset=0&is_legacy=false';
+        let url = `${XMP_API}/api/tickets?limit=50&offset=0&is_legacy=false`;
         if (companyId && companyId !== 'null' && companyId !== 'undefined' && companyId !== '') {
             url += `&as_company_id=${companyId}`;
         }
-        
-        console.log(`📡 Proxying to: ${url}`);
-        
-        const response = await fetch(url, { method: 'GET', headers });
-        
+
+        console.log('Proxying to:', url);
+        const response = await fetch(url, { method: 'GET', headers: xmpHeaders(token) });
+
         if (response.ok) {
             const data = await response.json();
-            const tickets = data.tickets || [];
+            const tickets = data.tickets || (Array.isArray(data) ? data : []);
             console.log(`✅ Found ${tickets.length} tickets`);
-            res.json({ tickets, total: data.total || tickets.length });
+            return res.json({ tickets, total: data.total || tickets.length });
         } else {
-            console.log(`❌ Tickets API returned ${response.status}`);
-            res.json({ tickets: [], total: 0, message: 'API temporarily unavailable' });
+            const text = await response.text().catch(() => '');
+            console.log(`❌ Tickets API ${response.status}:`, text.slice(0, 300));
+            return res.json({ tickets: [], total: 0, message: `API error ${response.status}` });
         }
     } catch (err) {
         console.error('💥 Tickets error:', err.message);
-        res.json({ tickets: [], total: 0, message: 'API temporarily unavailable' });
+        res.json({ tickets: [], total: 0, message: 'API unavailable' });
     }
 });
 
-// SINGLE TICKET API
+// ========== SINGLE TICKET ==========
 app.get('/api/tickets/:id', async (req, res) => {
     const token = req.headers.authorization;
     const ticketId = req.params.id;
-    
-    const headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json',
-        'Origin': 'https://staging.xmp.xtend.co',
-        'Referer': 'https://staging.xmp.xtend.co/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    };
-    
-    try {
-        const response = await fetch(`https://api-staging.xmp.xtend.co/api/tickets/${ticketId}`, { headers });
-        const data = await response.json();
-        res.json(data);
-    } catch (err) {
-        console.error('Ticket detail error:', err);
-        res.status(500).json({ error: err.message });
-    }
-});
+    if (!token) return res.status(401).json({ error: 'No authorization token' });
 
-// CREATE TICKET
-app.post('/api/tickets', async (req, res) => {
-    const token = req.headers.authorization;
-    
-    const headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json',
-        'Origin': 'https://staging.xmp.xtend.co',
-        'Referer': 'https://staging.xmp.xtend.co/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    };
-    
     try {
-        const response = await fetch('https://api-staging.xmp.xtend.co/api/tickets', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(req.body)
+        const response = await fetch(`${XMP_API}/api/tickets/${ticketId}`, {
+            headers: xmpHeaders(token)
         });
-        
         const data = await response.json();
         res.status(response.status).json(data);
     } catch (err) {
-        console.error('Create ticket error:', err);
+        console.error('Ticket detail error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
-// SEND REPLY
+// ========== CREATE TICKET ==========
+app.post('/api/tickets', async (req, res) => {
+    const token = req.headers.authorization;
+    if (!token) return res.status(401).json({ error: 'No authorization token' });
+
+    try {
+        const response = await fetch(`${XMP_API}/api/tickets`, {
+            method: 'POST',
+            headers: xmpHeaders(token),
+            body: JSON.stringify(req.body)
+        });
+        const data = await response.json();
+        res.status(response.status).json(data);
+    } catch (err) {
+        console.error('Create ticket error:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// ========== TICKET MESSAGES ==========
 app.post('/api/tickets/:id/messages', async (req, res) => {
     const token = req.headers.authorization;
     const ticketId = req.params.id;
-    
-    const headers = {
-        'Authorization': token,
-        'Content-Type': 'application/json',
-        'Origin': 'https://staging.xmp.xtend.co',
-        'Referer': 'https://staging.xmp.xtend.co/',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    };
-    
+    if (!token) return res.status(401).json({ error: 'No authorization token' });
+
     try {
-        const response = await fetch(`https://api-staging.xmp.xtend.co/api/tickets/${ticketId}/messages`, {
+        const response = await fetch(`${XMP_API}/api/tickets/${ticketId}/messages`, {
             method: 'POST',
-            headers,
+            headers: xmpHeaders(token),
             body: JSON.stringify(req.body)
         });
-        
         const data = await response.json();
         res.status(response.status).json(data);
     } catch (err) {
-        console.error('Send reply error:', err);
+        console.error('Send reply error:', err.message);
         res.status(500).json({ error: err.message });
     }
 });
 
-// ========== SERVE HTML FILES ==========
+// ========== SERVE STATIC FILES ==========
 app.get('/login.html', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard.html', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/js/app.js', (req, res) => res.sendFile(path.join(__dirname, 'js', 'app.js')));
+app.get('/js/auth.js', (req, res) => res.sendFile(path.join(__dirname, 'js', 'auth.js')));
+app.get('/js/api.js', (req, res) => res.sendFile(path.join(__dirname, 'js', 'api.js')));
 app.get('/manifest.json', (req, res) => res.sendFile(path.join(__dirname, 'manifest.json')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-
-// Catch-all for SPA routing
 app.get('*', (req, res) => {
-    if (!req.path.includes('.')) {
-        res.sendFile(path.join(__dirname, 'login.html'));
-    }
+    if (!req.path.includes('.')) res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// ========== START SERVER ==========
+// ========== START ==========
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`
-╔═══════════════════════════════════════════════════════════════════════╗
-║                    XMP TICKETS PWA - READY FOR DEPLOYMENT              ║
-╠═══════════════════════════════════════════════════════════════════════╣
-║                                                                       ║
-║  🚀 Server: http://localhost:${PORT}                                   ║
-║  🔐 Login: http://localhost:${PORT}/login.html                        ║
-║  📊 Dashboard: http://localhost:${PORT}/dashboard.html                ║
-║                                                                       ║
-║  ✅ Health check: /health                                             ║
-║  ✅ Cognito Auth: Ready                                               ║
-║  ✅ API Proxy: Ready (with proper headers)                            ║
-║                                                                       ║
-║  📝 Note: APIs are currently down. Once they're back and             ║
-║     your Cognito App Client URLs are whitelisted, everything         ║
-║     will work automatically.                                          ║
-║                                                                       ║
-╚═══════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════╗
+║            XMP TICKETS PWA — SERVER READY            ║
+╠══════════════════════════════════════════════════════╣
+║  🚀 http://localhost:${PORT}                          
+║  🔐 Login:     /login.html                          
+║  📊 Dashboard: /dashboard.html                      
+║                                                      
+║  ✅ Cognito Auth (login + MFA)                      
+║  ✅ Invite / Request Access endpoint                
+║  ✅ Companies & Tickets proxy                       
+║                                                      
+║  📧 Access requests logged to console.              
+║     Set ADMIN_EMAIL + configure SES to email them.  
+╚══════════════════════════════════════════════════════╝
     `);
 });
