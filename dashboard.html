@@ -8,612 +8,285 @@
     <title>Dashboard | XMP Tickets</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #0F172A;
-            color: #F1F5F9;
-        }
+        body { font-family: 'Inter', sans-serif; background: #0F172A; color: #F1F5F9; }
 
-        /* Navbar */
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Highlight rows assigned to current user */
+        .assigned-to-me td { border-left: 3px solid #3B82F6; }
+
         .navbar {
             background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            position: sticky; top: 0; z-index: 100;
         }
-
         .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 16px;
+            max-width: 1400px; margin: 0 auto; padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 16px;
         }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
+        .logo { display: flex; align-items: center; gap: 10px; }
         .logo-icon {
-            width: 32px;
-            height: 32px;
+            width: 32px; height: 32px;
             background: linear-gradient(135deg, #1A56DB, #3B82F6);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: white;
+            border-radius: 8px; display: flex; align-items: center;
+            justify-content: center; font-weight: 700; color: white;
         }
+        .logo-text { font-size: 18px; font-weight: 600; }
 
-        .logo-text {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        }
+        .nav-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
         .company-select {
-            background: #1E293B;
-            border: 1px solid #334155;
-            padding: 8px 12px;
-            border-radius: 8px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
+            background: #1E293B; border: 1px solid #334155;
+            padding: 8px 12px; border-radius: 8px;
+            color: white; font-family: 'Inter', sans-serif; cursor: pointer;
+            font-size: 13px;
         }
 
         .btn-new {
             background: linear-gradient(135deg, #1A56DB, #3B82F6);
-            border: none;
-            padding: 8px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
+            border: none; padding: 8px 20px; border-radius: 8px;
+            color: white; font-weight: 500; cursor: pointer;
+            transition: all 0.2s; font-size: 14px;
         }
-
-        .btn-new:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.3);
-        }
+        .btn-new:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,86,219,0.3); }
 
         .user-menu {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            padding: 6px 12px;
-            border-radius: 8px;
-            background: #1E293B;
+            display: flex; align-items: center; gap: 12px;
+            cursor: pointer; padding: 6px 14px; border-radius: 10px;
+            background: #1E293B; border: 1px solid #334155;
+            transition: background 0.2s;
         }
+        .user-menu:hover { background: #273549; }
 
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 32px; height: 32px;
             background: linear-gradient(135deg, #1A56DB, #3B82F6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: 600; font-size: 14px;
         }
 
-        /* Main Content */
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px;
+        .user-info { display: flex; flex-direction: column; gap: 2px; }
+        .user-name-row { display: flex; align-items: center; gap: 8px; }
+        .user-name { font-size: 13px; font-weight: 500; }
+
+        .role-badge {
+            font-size: 10px; padding: 2px 8px; border-radius: 20px;
+            font-weight: 600; white-space: nowrap;
         }
 
-        /* Stats Grid */
+        .user-email-text { font-size: 10px; color: #64748B; }
+
+        /* Main */
+        .main-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 16px; margin-bottom: 24px;
         }
-
         .stat-card {
-            background: #1E293B;
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid #334155;
+            background: #1E293B; border-radius: 16px;
+            padding: 20px; border: 1px solid #334155;
         }
+        .stat-value { font-size: 32px; font-weight: 700; margin-bottom: 4px; }
+        .stat-label { font-size: 13px; color: #94A3B8; }
 
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: #94A3B8;
-        }
-
-        /* Filters */
         .filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            align-items: center;
+            display: flex; gap: 10px; margin-bottom: 20px;
+            flex-wrap: wrap; align-items: center;
         }
-
         .filter-chip {
-            background: #1E293B;
-            border: 1px solid #334155;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s;
+            background: #1E293B; border: 1px solid #334155;
+            padding: 7px 16px; border-radius: 20px; font-size: 13px;
+            cursor: pointer; transition: all 0.2s; color: #94A3B8;
         }
+        .filter-chip:hover { background: #334155; color: white; }
+        .filter-chip.active { background: #1A56DB; border-color: #1A56DB; color: white; }
 
-        .filter-chip:hover {
-            background: #334155;
-        }
-
-        .filter-chip.active {
-            background: #1A56DB;
-            border-color: #1A56DB;
-        }
-
-        .search-bar {
-            flex: 1;
-            min-width: 200px;
-        }
-
+        .search-bar { flex: 1; min-width: 200px; }
         .search-bar input {
-            width: 100%;
-            background: #1E293B;
-            border: 1px solid #334155;
-            padding: 8px 16px;
-            border-radius: 20px;
-            color: white;
-            font-family: 'Inter', sans-serif;
+            width: 100%; background: #1E293B; border: 1px solid #334155;
+            padding: 8px 16px; border-radius: 20px; color: white;
+            font-family: 'Inter', sans-serif; font-size: 13px;
         }
+        .search-bar input::placeholder { color: #64748B; }
+        .search-bar input:focus { outline: none; border-color: #3B82F6; }
 
-        .search-bar input::placeholder {
-            color: #64748B;
-        }
-
-        /* Tickets Table */
         .tickets-table-container {
-            background: #1E293B;
-            border-radius: 16px;
-            border: 1px solid #334155;
-            overflow-x: auto;
+            background: #1E293B; border-radius: 16px;
+            border: 1px solid #334155; overflow-x: auto;
         }
-
-        .tickets-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
+        .tickets-table { width: 100%; border-collapse: collapse; }
         .tickets-table th {
-            text-align: left;
-            padding: 16px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #94A3B8;
+            text-align: left; padding: 14px 16px;
+            font-size: 11px; font-weight: 600; color: #64748B;
+            text-transform: uppercase; letter-spacing: 0.05em;
             border-bottom: 1px solid #334155;
         }
-
         .tickets-table td {
-            padding: 16px;
-            border-bottom: 1px solid #334155;
-            cursor: pointer;
-            transition: background 0.2s;
+            padding: 14px 16px; border-bottom: 1px solid #1E2A3A;
+            cursor: pointer; transition: background 0.15s; font-size: 14px;
         }
-
-        .tickets-table tr:hover td {
-            background: #2D3A5E;
-        }
-
-        .tickets-table tr.selected td {
-            background: #1A56DB20;
-        }
+        .tickets-table tr:last-child td { border-bottom: none; }
+        .tickets-table tr:hover td { background: #243040; }
+        .ticket-id { font-family: monospace; font-size: 12px; color: #64748B; }
 
         .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
+            display: inline-block; padding: 3px 10px;
+            border-radius: 20px; font-size: 11px; font-weight: 600;
         }
-
-        .badge-open { background: #1A56DB20; color: #60A5FA; }
-        .badge-inprogress { background: #8B5CF620; color: #A78BFA; }
-        .badge-pending { background: #F59E0B20; color: #FBBF24; }
-        .badge-resolved { background: #10B98120; color: #34D399; }
-        .badge-urgent { background: #EF444420; color: #F87171; }
-        .badge-high { background: #F9731620; color: #FB923C; }
-        .badge-medium { background: #3B82F620; color: #60A5FA; }
-        .badge-low { background: #6B728020; color: #9CA3AF; }
+        .badge-open       { background: #1A56DB22; color: #60A5FA; }
+        .badge-in_progress, .badge-inprogress
+                          { background: #8B5CF622; color: #A78BFA; }
+        .badge-pending    { background: #F59E0B22; color: #FBBF24; }
+        .badge-resolved   { background: #10B98122; color: #34D399; }
+        .badge-closed     { background: #6B728022; color: #9CA3AF; }
+        .badge-urgent     { background: #EF444422; color: #F87171; }
+        .badge-high       { background: #F9731622; color: #FB923C; }
+        .badge-medium     { background: #3B82F622; color: #60A5FA; }
+        .badge-low        { background: #6B728022; color: #9CA3AF; }
 
         /* Detail Pane */
         .detail-pane {
-            position: fixed;
-            right: 0;
-            top: 0;
-            width: 450px;
-            height: 100vh;
-            background: #1E293B;
-            border-left: 1px solid #334155;
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 200;
-            overflow-y: auto;
+            position: fixed; right: 0; top: 0;
+            width: 460px; height: 100vh;
+            background: #1E293B; border-left: 1px solid #334155;
+            transform: translateX(100%); transition: transform 0.3s ease;
+            z-index: 200; overflow-y: auto;
         }
-
-        .detail-pane.open {
-            transform: translateX(0);
-        }
-
+        .detail-pane.open { transform: translateX(0); }
         .detail-header {
-            padding: 20px;
-            border-bottom: 1px solid #334155;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            padding: 20px; border-bottom: 1px solid #334155;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            position: sticky; top: 0; background: #1E293B; z-index: 10;
         }
-
         .detail-close {
-            background: none;
-            border: none;
-            color: #94A3B8;
-            font-size: 24px;
-            cursor: pointer;
+            background: none; border: none; color: #64748B;
+            font-size: 24px; cursor: pointer; line-height: 1;
         }
-
-        .detail-body {
-            padding: 20px;
-        }
-
-        .detail-section {
-            margin-bottom: 24px;
-        }
-
+        .detail-close:hover { color: white; }
+        .detail-body { padding: 20px; }
+        .detail-section { margin-bottom: 22px; }
         .detail-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #64748B;
-            margin-bottom: 8px;
+            font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+            color: #64748B; margin-bottom: 8px; font-weight: 600;
         }
-
         .reply-input {
-            width: 100%;
-            background: #0F172A;
-            border: 1px solid #334155;
-            padding: 12px;
-            border-radius: 12px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            resize: vertical;
+            width: 100%; background: #0F172A; border: 1px solid #334155;
+            padding: 12px; border-radius: 12px; color: white;
+            font-family: 'Inter', sans-serif; resize: vertical; font-size: 14px;
         }
-
+        .reply-input:focus { outline: none; border-color: #3B82F6; }
         .btn-send {
-            background: #1A56DB;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            color: white;
-            margin-top: 12px;
-            cursor: pointer;
+            background: #1A56DB; border: none; padding: 10px 20px;
+            border-radius: 8px; color: white; margin-top: 10px;
+            cursor: pointer; font-size: 14px; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-send:hover { background: #2563EB; }
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: #64748B; }
+        .hidden { display: none; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal {
+            background: #1E293B; border-radius: 24px;
+            width: 550px; max-width: 90%; max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            animation: modalSlideIn 0.3s ease;
+        }
+        @keyframes modalSlideIn {
+            from { opacity:0; transform:translateY(-20px); }
+            to   { opacity:1; transform:translateY(0); }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 24px; border-bottom: 1px solid #334155;
+        }
+        .modal-header h3 { font-size: 18px; font-weight: 600; color: white; }
+        .modal-close {
+            background: none; border: none; color: #64748B;
+            font-size: 24px; cursor: pointer; border-radius: 6px;
+            width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+        }
+        .modal-close:hover { background: #334155; color: white; }
+        .modal-body { padding: 24px; }
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 12px;
+            padding: 16px 24px; border-top: 1px solid #334155;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #64748B;
+        .form-group { margin-bottom: 18px; }
+        .form-label { display: block; font-size: 13px; font-weight: 500; color: #CBD5E1; margin-bottom: 7px; }
+        .required { color: #EF4444; }
+        .form-input, .form-select, .form-textarea {
+            width: 100%; padding: 11px 14px; background: #0F172A;
+            border: 1px solid #334155; border-radius: 10px;
+            font-size: 14px; color: white; font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
         }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none; border-color: #3B82F6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+        .form-textarea { resize: vertical; }
 
-        .hidden {
-            display: none;
+        .type-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .type-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            padding: 14px; background: #0F172A; border: 2px solid #334155;
+            border-radius: 12px; cursor: pointer; transition: all 0.2s;
+            font-family: 'Inter', sans-serif; width: 100%;
         }
+        .type-btn:hover { border-color: #3B82F6; }
+        .type-btn.active { border-color: #3B82F6; background: #1A56DB15; }
+        .type-icon { font-size: 26px; }
+        .type-name { font-size: 14px; font-weight: 600; color: white; }
+        .type-desc { font-size: 11px; color: #64748B; }
+
+        .priority-selector { display: flex; gap: 8px; flex-wrap: wrap; }
+        .priority-btn {
+            flex: 1; padding: 9px 14px; background: #0F172A;
+            border: 1px solid #334155; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 500; display: flex; align-items: center;
+            justify-content: center; gap: 5px; transition: all 0.2s;
+            font-family: 'Inter', sans-serif; color: #94A3B8;
+        }
+        .priority-btn.low.active    { border: 2px solid #10B981; background: #10B98115; color: #34D399; }
+        .priority-btn.medium.active { border: 2px solid #3B82F6; background: #3B82F615; color: #60A5FA; }
+        .priority-btn.high.active   { border: 2px solid #F97316; background: #F9731615; color: #FB923C; }
+        .priority-btn.urgent.active { border: 2px solid #EF4444; background: #EF444415; color: #F87171; }
+
+        .form-row { display: flex; gap: 16px; }
+        .form-group.half { flex: 1; }
+
+        .btn-cancel, .btn-submit {
+            padding: 10px 24px; border-radius: 8px; font-size: 14px;
+            font-weight: 500; cursor: pointer; transition: all 0.2s;
+            font-family: 'Inter', sans-serif; border: none;
+        }
+        .btn-cancel { background: #334155; color: #CBD5E1; }
+        .btn-cancel:hover { background: #475569; color: white; }
+        .btn-submit { background: linear-gradient(135deg, #1A56DB, #3B82F6); color: white; }
+        .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,86,219,0.4); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         @media (max-width: 768px) {
             .detail-pane { width: 100%; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stats-grid { grid-template-columns: repeat(2,1fr); }
             .nav-container { flex-direction: column; align-items: stretch; }
             .nav-actions { justify-content: space-between; }
-        }
-
-        /* Modal Styles - Modern Design */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal {
-            background: #1E293B;
-            border-radius: 24px;
-            width: 550px;
-            max-width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            animation: modalSlideIn 0.3s ease;
-        }
-
-        @keyframes modalSlideIn {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 24px;
-            border-bottom: 1px solid #334155;
-        }
-
-        .modal-header h3 {
-            font-size: 20px;
-            font-weight: 600;
-            color: white;
-            margin: 0;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: #94A3B8;
-            font-size: 28px;
-            cursor: pointer;
-            padding: 0;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: #334155;
-            color: white;
-        }
-
-        .modal-body {
-            padding: 24px;
-        }
-
-        .modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 16px 24px;
-            border-top: 1px solid #334155;
-        }
-
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: #CBD5E1;
-            margin-bottom: 8px;
-        }
-
-        .required {
-            color: #EF4444;
-        }
-
-        .form-input, .form-select, .form-textarea {
-            width: 100%;
-            padding: 12px 16px;
-            background: #0F172A;
-            border: 1px solid #334155;
-            border-radius: 10px;
-            font-size: 14px;
-            color: white;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-        }
-
-        .form-input:focus, .form-select:focus, .form-textarea:focus {
-            outline: none;
-            border-color: #3B82F6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .form-textarea {
-            resize: vertical;
-        }
-
-        /* Type Selector Buttons */
-        .type-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        .type-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-            padding: 16px;
-            background: #0F172A;
-            border: 2px solid #334155;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-            width: 100%;
-        }
-
-        .type-btn:hover {
-            border-color: #3B82F6;
-            background: #1E293B;
-            transform: translateY(-2px);
-        }
-
-        .type-btn.active {
-            border-color: #3B82F6;
-            background: linear-gradient(135deg, #1A56DB20, #3B82F620);
-        }
-
-        .type-icon {
-            font-size: 28px;
-        }
-
-        .type-name {
-            font-size: 15px;
-            font-weight: 600;
-            color: white;
-        }
-
-        .type-desc {
-            font-size: 11px;
-            color: #94A3B8;
-        }
-
-        /* Priority Selector Buttons */
-        .priority-selector {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .priority-btn {
-            flex: 1;
-            padding: 10px 16px;
-            background: #0F172A;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-            color: #CBD5E1;
-        }
-
-        .priority-btn:hover {
-            border-color: #3B82F6;
-            transform: translateY(-1px);
-        }
-
-        .priority-btn.active {
-            border-width: 2px;
-        }
-
-        .priority-btn.low.active {
-            border-color: #10B981;
-            background: #10B98120;
-            color: #34D399;
-        }
-
-        .priority-btn.medium.active {
-            border-color: #3B82F6;
-            background: #3B82F620;
-            color: #60A5FA;
-        }
-
-        .priority-btn.high.active {
-            border-color: #F97316;
-            background: #F9731620;
-            color: #FB923C;
-        }
-
-        .priority-btn.urgent.active {
-            border-color: #EF4444;
-            background: #EF444420;
-            color: #F87171;
-        }
-
-        /* Optional Fields */
-        .optional-fields {
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .form-row {
-            display: flex;
-            gap: 16px;
-        }
-
-        .form-group.half {
-            flex: 1;
-        }
-
-        /* Modal Buttons */
-        .btn-cancel, .btn-submit {
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-            border: none;
-        }
-
-        .btn-cancel {
-            background: #334155;
-            color: #CBD5E1;
-        }
-
-        .btn-cancel:hover {
-            background: #475569;
-            color: white;
-        }
-
-        .btn-submit {
-            background: linear-gradient(135deg, #1A56DB, #3B82F6);
-            color: white;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(26, 86, 219, 0.4);
         }
     </style>
 </head>
@@ -625,52 +298,89 @@
                 <span class="logo-text">XMP Tickets</span>
             </div>
             <div class="nav-actions">
-                <select id="companySelect" class="company-select">
+                <select id="companySelect" class="company-select" title="Select company">
                     <option value="">Loading companies...</option>
                 </select>
                 <button class="btn-new" onclick="openNewTicket()">+ New Ticket</button>
-                <div class="user-menu" onclick="logout()">
-            <div class="user-avatar" id="userAvatar">U</div>
-    <div>
-        <span id="userName">User</span>
-        <div style="font-size: 10px; color: #94A3B8;" id="userEmail"></div>
-    </div>
-</div>
+                <div class="user-menu" onclick="logout()" title="Click to sign out">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-info">
+                        <div class="user-name-row">
+                            <span class="user-name" id="userName">User</span>
+                            <span class="role-badge" id="userRoleBadge" style="background:#3B82F622;color:#60A5FA;border:1px solid #3B82F644">—</span>
+                        </div>
+                        <span class="user-email-text" id="userEmail"></span>
+                    </div>
+                </div>
             </div>
         </div>
     </nav>
 
     <div class="main-container">
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-value" id="statAssigned">0</div><div class="stat-label">Assigned to Me</div></div>
-            <div class="stat-card"><div class="stat-value" id="statOpen">0</div><div class="stat-label">Open</div></div>
-            <div class="stat-card"><div class="stat-value" id="statUrgent">0</div><div class="stat-label">Urgent</div></div>
-            <div class="stat-card"><div class="stat-value" id="statCross">0</div><div class="stat-label">Cross-Company</div></div>
+            <div class="stat-card">
+                <div class="stat-value" id="statAssigned">—</div>
+                <div class="stat-label">Assigned to Me</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statOpen">—</div>
+                <div class="stat-label">Open</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statUrgent">—</div>
+                <div class="stat-label">Urgent</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="statCross">—</div>
+                <div class="stat-label">Cross-Company</div>
+            </div>
         </div>
 
         <div class="filters">
-            <div class="filter-chip active" data-filter="all" onclick="filterTickets('all')">All</div>
-            <div class="filter-chip" data-filter="open" onclick="filterTickets('open')">Open</div>
-            <div class="filter-chip" data-filter="in_progress" onclick="filterTickets('in_progress')">In Progress</div>
-            <div class="filter-chip" data-filter="pending" onclick="filterTickets('pending')">Pending</div>
-            <div class="filter-chip" data-filter="resolved" onclick="filterTickets('resolved')">Resolved</div>
-            <div class="search-bar"><input type="text" id="searchInput" placeholder="Search tickets..." oninput="searchTickets()"></div>
+            <div class="filter-chip active" data-filter="all"         onclick="filterTickets('all')">All</div>
+            <div class="filter-chip"        data-filter="open"        onclick="filterTickets('open')">Open</div>
+            <div class="filter-chip"        data-filter="in_progress" onclick="filterTickets('in_progress')">In Progress</div>
+            <div class="filter-chip"        data-filter="pending"     onclick="filterTickets('pending')">Pending</div>
+            <div class="filter-chip"        data-filter="resolved"    onclick="filterTickets('resolved')">Resolved</div>
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Search by title, ID..." oninput="searchTickets()">
+            </div>
         </div>
 
         <div class="tickets-table-container">
             <table class="tickets-table">
                 <thead>
-                    <tr><th>ID</th><th>Title</th><th>Type</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Created</th></tr>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title / Route</th>
+                        <th>Type</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned To</th>
+                        <th>Created</th>
+                    </tr>
                 </thead>
-                <tbody id="ticketsTableBody"></tbody>
+                <tbody id="ticketsTableBody">
+                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#64748B">
+                        <div style="display:inline-block;width:24px;height:24px;border:2px solid #334155;border-top-color:#3B82F6;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:10px"></div>
+                        Loading...
+                    </td></tr>
+                </tbody>
             </table>
-            <div id="emptyState" class="empty-state hidden">No tickets found</div>
+            <div id="emptyState" class="empty-state hidden">
+                <div style="font-size:32px;margin-bottom:12px">📭</div>
+                No tickets found
+            </div>
         </div>
     </div>
 
+    <!-- Detail Pane -->
     <div class="detail-pane" id="detailPane">
         <div class="detail-header">
-            <div><strong id="detailId">---</strong><br><span id="detailTitle">Ticket Title</span></div>
+            <div>
+                <div style="font-size:11px;color:#64748B;margin-bottom:4px" id="detailId">---</div>
+                <strong id="detailTitle">Ticket Title</strong>
+            </div>
             <button class="detail-close" onclick="closeDetail()">×</button>
         </div>
         <div class="detail-body" id="detailBody"></div>
@@ -699,75 +409,62 @@
                         </button>
                     </div>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Company <span class="required">*</span></label>
                     <select id="ticketCompany" class="form-select">
                         <option value="">Select a company</option>
                     </select>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Title <span class="required">*</span></label>
                     <input type="text" id="ticketTitle" class="form-input" placeholder="Brief summary of the issue">
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Description <span class="required">*</span></label>
-                    <textarea id="ticketDesc" class="form-textarea" rows="4" placeholder="Detailed description of the issue..."></textarea>
+                    <textarea id="ticketDesc" class="form-textarea" rows="4" placeholder="Detailed description..."></textarea>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Priority</label>
                     <div class="priority-selector">
-                        <button type="button" class="priority-btn low" onclick="selectPriority('low')"><span>🟢</span> Low</button>
-                        <button type="button" class="priority-btn medium active" onclick="selectPriority('medium')"><span>🔵</span> Medium</button>
-                        <button type="button" class="priority-btn high" onclick="selectPriority('high')"><span>🟠</span> High</button>
-                        <button type="button" class="priority-btn urgent" onclick="selectPriority('urgent')"><span>🔴</span> Urgent</button>
+                        <button type="button" class="priority-btn low"    onclick="selectPriority('low')">🟢 Low</button>
+                        <button type="button" class="priority-btn medium active" onclick="selectPriority('medium')">🔵 Medium</button>
+                        <button type="button" class="priority-btn high"   onclick="selectPriority('high')">🟠 High</button>
+                        <button type="button" class="priority-btn urgent" onclick="selectPriority('urgent')">🔴 Urgent</button>
                     </div>
                     <input type="hidden" id="ticketPriority" value="medium">
                 </div>
-
-                <div id="opsFields" class="optional-fields">
+                <div id="opsFields">
                     <div class="form-row">
                         <div class="form-group half">
                             <label class="form-label">Vehicle Number</label>
-                            <input type="text" id="ticketVehicle" class="form-input" placeholder="e.g., WC 445-321">
+                            <input type="text" id="ticketVehicle" class="form-input" placeholder="e.g. WC 445-321">
                         </div>
                         <div class="form-group half">
                             <label class="form-label">Department</label>
                             <select id="ticketDepartment" class="form-select">
                                 <option value="">Select department</option>
-                                <option>Fleet</option>
-                                <option>Logistics</option>
-                                <option>Operations</option>
-                                <option>Maintenance</option>
+                                <option>Fleet</option><option>Logistics</option>
+                                <option>Operations</option><option>Maintenance</option>
                             </select>
                         </div>
                     </div>
                 </div>
-
-                <div id="adminFields" class="optional-fields" style="display: none;">
+                <div id="adminFields" style="display:none">
                     <div class="form-row">
                         <div class="form-group half">
                             <label class="form-label">Category</label>
                             <select id="ticketCategory" class="form-select">
                                 <option value="">Select category</option>
-                                <option>HR</option>
-                                <option>IT Support</option>
-                                <option>Leave</option>
-                                <option>Reimbursement</option>
-                                <option>Finance</option>
+                                <option>HR</option><option>IT Support</option>
+                                <option>Leave</option><option>Reimbursement</option><option>Finance</option>
                             </select>
                         </div>
                         <div class="form-group half">
                             <label class="form-label">Department</label>
                             <select id="ticketAdminDept" class="form-select">
                                 <option value="">Select department</option>
-                                <option>HR</option>
-                                <option>IT</option>
-                                <option>Finance</option>
-                                <option>Administration</option>
+                                <option>HR</option><option>IT</option>
+                                <option>Finance</option><option>Administration</option>
                             </select>
                         </div>
                     </div>
@@ -780,36 +477,20 @@
         </div>
     </div>
 
-    <script src="/js/app.js"></script>
+    <!-- Auth guard runs first -->
     <script>
-        // Auth check
-        const token = localStorage.getItem('xmp_access_token');
-        if (!token) window.location.href = '/login.html';
+        (function() {
+            const token  = localStorage.getItem('xmp_access_token');
+            const expiry = localStorage.getItem('xmp_token_expiry');
+            if (!token || (expiry && Date.now() > parseInt(expiry))) {
+                localStorage.clear();
+                window.location.href = '/login.html';
+            }
+        })();
     </script>
+    <!-- Load modules in order: auth → api → app -->
+    <script src="/js/auth.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/app.js"></script>
 </body>
-<script>
-    // Route Protection - Check if user is authenticated
-    (function checkAuth() {
-        const token = localStorage.getItem('xmp_access_token');
-        const expiry = localStorage.getItem('xmp_token_expiry');
-        
-        console.log('Auth check - Token exists:', !!token);
-        console.log('Auth check - Expiry:', expiry);
-        
-        if (!token) {
-            console.log('No token found, redirecting to login');
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        if (expiry && Date.now() > parseInt(expiry)) {
-            console.log('Token expired, redirecting to login');
-            localStorage.clear();
-            window.location.href = '/login.html';
-            return;
-        }
-        
-        console.log('User authenticated');
-    })();
-</script>
 </html>

@@ -1,140 +1,183 @@
-# XMP Tickets - Fleet & Operations Management
+# XMP Tickets — Fleet & Operations Management
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/YOUR_USERNAME/xmp-tickets-pwa)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/YOUR_USERNAME/xmp-tickets-pwa)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Security](https://img.shields.io/badge/security-AWS%20Cognito-blue)](https://aws.amazon.com/cognito/)
-[![Deployed on Render](https://img.shields.io/badge/deployed%20on-Render-blue)](https://render.com)
+[![Security](https://img.shields.io/badge/security-AWS%20Cognito-orange)](https://aws.amazon.com/cognito/)
+[![Deployed on Render](https://img.shields.io/badge/deployed%20on-Render-46e3b7)](https://render.com)
 
-## 🔐 Security Overview
+---
 
-**Your credentials are SAFE. Here's why:**
+## 🚀 Live URL
 
-| Security Feature | Implementation |
-|-----------------|----------------|
-| Password Storage | NEVER stored - sent directly to AWS Cognito |
-| Authentication | AWS Cognito (enterprise-grade) |
-| Encryption | HTTPS + JWT tokens |
-| Token Expiry | 1 hour auto-expiration |
-| MFA Support | Optional multi-factor authentication |
-| Session Management | Secure token-based |
+**https://xmp-tickets-pwa.onrender.com**
 
-**What we store:**
-- ✅ Authentication token (expires in 1 hour)
-- ✅ User email address
-- ❌ NEVER your password
-- ❌ NEVER personal sensitive data
+---
 
-## 🚀 Live Demo
+## 📁 Project Structure
 
-**Deployed URL:** https://xmp-tickets-pwa.onrender.com
+```
+xmp-tickets-pwa/
+├── server.js           # Express proxy server (auth + API + invite endpoint)
+├── dashboard.html      # Main ticket dashboard
+├── login.html          # Login + Request Access page
+├── index.html          # Landing / marketing page
+├── sw.js               # Service worker (PWA offline support)
+├── manifest.json       # PWA manifest
+├── js/
+│   ├── auth.js         # Auth module (login, MFA, token, invite)
+│   ├── api.js          # API module (companies, tickets, messages)
+│   └── app.js          # Dashboard logic (render, stats, filters)
+├── css/                # Stylesheets (if any)
+├── package.json
+├── render.yaml
+└── README.md
+```
+
+---
+
+## 🔐 Security
+
+| Feature | Implementation |
+|---|---|
+| Password storage | **Never stored** — sent directly to AWS Cognito |
+| Authentication | AWS Cognito (USER_PASSWORD_AUTH) |
+| MFA | SOFTWARE_TOKEN_MFA (TOTP) |
+| Session tokens | JWT, 1-hour expiry |
+| API proxy | Server-side only — no keys exposed to browser |
+| Route protection | Token + expiry checked on every page load |
+
+**What lives in localStorage:**
+
+| Key | Value | Expires |
+|---|---|---|
+| `xmp_access_token` | Cognito JWT | 1 hour |
+| `xmp_token_expiry` | Timestamp | — |
+| `xmp_user_name` | Display name | — |
+| `xmp_user_email` | Email address | — |
+| `xmp_remember_email` | Email (opt-in) | — |
+
+Passwords are **never** stored anywhere.
+
+---
 
 ## ✨ Features
 
-| Feature | Status | Security |
-|---------|--------|----------|
-| Secure Login | ✅ | AWS Cognito |
-| MFA Support | ✅ | Optional 2FA |
-| Token-based Auth | ✅ | JWT with expiry |
-| Multi-Company | ✅ | Role-based |
-| Ticket Management | ✅ | Permission-based |
-| PWA Ready | ✅ | HTTPS required |
+- ✅ Secure login via AWS Cognito (af-south-1)
+- ✅ MFA / TOTP support
+- ✅ Role badge decoded from Cognito JWT (`cognito:groups`)
+- ✅ Multi-company selector — all registered companies shown on login
+- ✅ Tickets table with status, priority, assigned-to filtering
+- ✅ Rows assigned to the current user highlighted
+- ✅ Ticket detail pane with message thread + reply
+- ✅ Create new ticket (Operations or Admin/HR type)
+- ✅ "Request Access" invite flow for users without an account
+- ✅ PWA — installable on desktop and mobile
+- ✅ Deployed on Render (auto-deploy from `main`)
 
-## 📋 Architecture
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ SECURE AUTHENTICATION FLOW │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ │
-│ 1. User enters credentials │
-│ ↓ │
-│ 2. Credentials sent directly to AWS Cognito (never stored) │
-│ ↓ │
-│ 3. Cognito validates and returns JWT token │
-│ ↓ │
-│ 4. Token stored in localStorage (expires in 1 hour) │
-│ ↓ │
-│ 5. All API requests include token in Authorization header │
-│ ↓ │
-│ 6. Token automatically refreshed before expiry │
-│ │
-└─────────────────────────────────────────────────────────────────────────────┘
+---
 
-## 📥 Installation
+## 📦 Installation (local dev)
 
 ### Prerequisites
-- Node.js 18+ or Python 3.9+
-- Modern browser (Chrome, Edge, Firefox, Safari)
-- XMP staging credentials
-
-### Quick Start
+- Node.js 18+
+- XMP Cognito credentials (staging)
 
 ```bash
-# 1. Clone the repository
+# Clone
 git clone https://github.com/YOUR_USERNAME/xmp-tickets-pwa.git
 cd xmp-tickets-pwa
 
-# 2. Install dependencies
+# Install
 npm install
 
-# 3. Start the server
+# Run
 npm start
+# → http://localhost:3000
+```
 
-# 4. Open browser to:
-#    http://localhost:3000/login.html
+---
 
+## ☁️ Deployment (Render)
 
+Render auto-deploys from `main` using `render.yaml`.
 
-📱 Install as PWA
-Desktop (Chrome/Edge)
-Visit the deployed URL
+```yaml
+# render.yaml
+services:
+  - type: web
+    name: xmp-tickets-pwa
+    env: node
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: ADMIN_EMAIL
+        value: admin@xtend.co   # ← change this
+```
 
-Click install icon in address bar
+**Steps:**
+1. Push to `main`
+2. Render detects the push and rebuilds automatically
+3. Visit your Render URL to verify
 
-App installs as standalone window
+---
 
-Mobile (iOS)
-Open in Safari
+## 🔌 API Endpoints
 
-Tap Share → "Add to Home Screen"
+All endpoints proxied through `server.js` to `api-staging.xmp.xtend.co`.
 
-Mobile (Android)
-Open in Chrome
+| Endpoint | Auth | Method | Description |
+|---|---|---|---|
+| `POST /api/auth/login` | None | POST | Cognito login |
+| `POST /api/auth/mfa` | Session | POST | TOTP verification |
+| `POST /api/auth/invite` | None | POST | Request platform access |
+| `GET /api/companies` | Bearer | GET | All companies |
+| `GET /api/tickets` | Bearer | GET | Tickets (filtered by company) |
+| `GET /api/tickets/:id` | Bearer | GET | Single ticket detail |
+| `POST /api/tickets` | Bearer | POST | Create ticket |
+| `POST /api/tickets/:id/messages` | Bearer | POST | Send reply |
 
-Tap ⋮ → "Install app"
+---
 
-🔌 API Security
-Endpoint	Authentication	Method
-/api/auth/login	None (credentials)	POST
-/api/auth/mfa	Session token	POST
-/api/companies	Bearer token	GET
-/api/tickets	Bearer token	GET/POST
-/api/tickets/:id/messages	Bearer token	POST
-🐛 Troubleshooting
-Issue: "Token expired"
-Solution: Log out and log in again
+## 📱 Install as PWA
 
-Issue: "401 Unauthorized"
-Solution: Token invalid - clear localStorage and re-authenticate
+**Desktop (Chrome / Edge)**
+1. Visit the Render URL
+2. Click the install icon in the address bar
+3. App opens as a standalone window
 
-Issue: "CORS errors"
-Solution: Use the deployed version on Render (handles CORS automatically)
+**iOS (Safari)**
+1. Open in Safari
+2. Tap Share → "Add to Home Screen"
 
-Security Check: Verify no password stored
-Open browser console (F12) and run:
+**Android (Chrome)**
+1. Open in Chrome
+2. Tap ⋮ → "Install app"
 
-javascript
-// This should NOT show your password
-console.log(localStorage.getItem('password'));  // Should be null
+---
 
-// This shows your token (normal)
-console.log(localStorage.getItem('xmp_access_token'));  // Token exists
-📁 Project Structure
-text
-xmp-tickets-pwa/
-├── server.js          # Node.js proxy server
-├── dashboard.html     # Main application
-├── login.html         # Login page
-├── js/
-│   └── app.js        # Frontend logic
-├── package.json      # Dependencies
-├── render.yaml       # Deployment config
-└── README.md         # Documentation
+## 🐛 Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Token expired | Log out and log in again |
+| 401 Unauthorized | Clear localStorage (`localStorage.clear()` in console) and re-login |
+| Companies not loading | Check browser console → Network tab → `/api/companies` response |
+| CORS errors locally | Use the Render URL; CORS is handled server-side |
+| Invite not sending email | Configure `ADMIN_EMAIL` env var and enable AWS SES in `server.js` |
+
+---
+
+## 🔧 Environment Variables (Render)
+
+| Variable | Required | Description |
+|---|---|---|
+| `PORT` | No | Defaults to 3000 |
+| `ADMIN_EMAIL` | Yes | Receives access request notifications |
+
+---
+
+## 📄 License
+
+MIT © Xtend Mobility Platform
